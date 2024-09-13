@@ -1,269 +1,181 @@
 <template>
-  <div class="mobile-app">
-    <!-- Top Banner -->
-    <div class="top-banner">
-      <h1>Meetings</h1>
-    </div>
+  <div class="d-flex align-items-center justify-content-center">
+    <img 
+      style="width: 100%;" 
+      src="https://scontent.fmru7-1.fna.fbcdn.net/v/t39.30808-6/437554383_3666537220249864_2979846986410022832_n.jpg?stp=cp6_dst-jpg&_nc_cat=104&ccb=1-7&_nc_sid=2285d6&_nc_ohc=WKseyYvIwx0Q7kNvgFtn8BG&_nc_ht=scontent.fmru7-1.fna&_nc_gid=AA7hUAHinW1khhK5CNo_XxC&oh=00_AYCyzCf0EsjFMNl-ZcyCt3bCpkoj1pRNYAGOF4QkiYBvEw&oe=66DE2B21"
+      alt="Background Image"
+    />
+  </div>
+  
+  <div class="main-container d-flex flex-column align-items-center justify-content-center">
+    <div class="content-wrapper text-center p-4">
+      <!-- Header -->
+      <p class="text-muted mb-4">Date: <b>{{ currentDate }}</b></p>
+      <p class="text-muted mb-4">Location: <b>Bureau Bonne Terre</b></p>
 
-    <!-- Filter Section -->
-    <div class="filter-section">
-      <div class="icon-section">
-        <button class="filter-button shortcut-button" @click="toggleFilters">
-            <i class="fas fa-filter"></i>
-          </button>
-          <button class="shortcut-button btn btn-success" @click="openModal('addMeetingModal')">
-            New Meeting
-          </button>
-      </div>
-      <div v-if="showFilters" class="filters">
-        <div class="input-group mt5" style="flex-wrap:nowrap">
-          <select2 v-model="searchProgram"  class="form-control nbr">
-            <option :key="0" :value="0" class="first-option">Program</option>
-              <option v-for="item in programs" :key="item.id" :value="item.id">{{ item.title }}</option>
-          </select2>
-          <div class="input-group-append">
-          <span class="input-group-text">
-            <i class="fas fa-sync-alt"></i>
-          </span>
+      <template v-if="!addNew">
+        <!-- Large Search Bar -->
+        <input
+          type="text"
+          v-model="searchQuery"
+          class="form-control form-control-lg"
+          placeholder="Type your name..."
+          aria-label="Search"
+          aria-describedby="button-addon2"
+        />
+  
+        <!-- User List Below Search Bar -->
+        <div class="user-list mt-4">
+          <div v-for="user in filteredUsers" :key="user.id" class="user-item d-flex align-items-center mb-2">
+            <input
+              type="checkbox"
+              :id="`user-${user.id}`"
+              class="form-check-input me-2"
+            />
+            <label :for="`user-${user.id}`" class="form-check-label">
+              {{ user.name }}
+            </label>
           </div>
         </div>
-
-      </div>
-      <!-- Search Bar -->
-      <div class="search-bar">
-        <div class="input-group mt5">
-          <input type="text" v-model="searchQuery" class="form-control nbr" placeholder="Search Meeting">
-          <div class="input-group-append" @click="resetSearch()">
-          <span class="input-group-text">
-            <i class="fas fa-sync-alt"></i>
-          </span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Main Content -->
-    <div class="content">
+      </template>
+      <template v-else>
+          <input type="text" v-model="form.name" class="form-control form-control-lg mb-3" placeholder="Full Name"/>
+          <input type="text" v-model="form.email" class="form-control form-control-lg mb-3" placeholder="Email"/>
+          <input type="text" v-model="form.locality" class="form-control form-control-lg mb-3" placeholder="Locality"/>
+          <input type="text" v-model="form.phone" class="form-control form-control-lg mb-3" placeholder="Phone"/>
+          <input type="text" v-model="form.constituency" class="form-control form-control-lg mb-3" placeholder="Constituency"/>
+          <button class="btn btn-success">Save</button>
+      </template>
 
     </div>
 
-
-    <!-- Bottom Menu -->
-    <div class="bottom-menu">
-      <div class="menu-item">
-        <i class="fas fa-briefcase"></i>
-        <span>Leads</span>
-      </div>
-      <div class="menu-item">
-        <i class="fas fa-calendar"></i>
-        <span>Activities</span>
-      </div>
-      <div class="menu-item">
-        <i class="fas fa-cog"></i>
-        <span>Settings</span>
-      </div>
+    <!-- Green Button -->
+    <div class="button-container mt-4">
+      <button v-if="!addNew" class="btn btn-primary" @click="addNew = true">New Member</button>
+      <button v-if="addNew" class="btn btn-danger" @click="addNew = false">Cancel</button>
     </div>
   </div>
-
 </template>
 
 <script>
-import axios from 'axios'
-import Select2 from '@/Shared/Select2.vue'
-
 export default {
-  components: {
-    Select2
-  },
-  props :{
+  props: {
+    users: {
+      type: Array,
+      default: () => []
+    }
   },
   data() {
     return {
       searchQuery: '',
-      leads: [],
-      showFilters: false,
-      showLeads: false,
-      messageTimeout: null, // To keep track of the timeout
+      currentDate: new Date().toLocaleDateString(), // Format today's date
+      addNew: false,
+      form: this.$inertia.form({
+        name: null,
+        email: null,
+        phone: null,
+        locality: null,
+        constituency: null,
+      }),
     };
   },
-  mounted() {
-    //this.getData();
-  },
   computed: {
-    filteredLeads() {
-    },
-  },
-  
-  methods: {
-    toggleFilters(){
-      this.showFilters = !this.showFilters;
-    },
-    openModal(modalId, item) {
-        this.selectedData = item; 
-        this.form.lead_id = item.id;
-        const modal = document.getElementById(modalId)
-        if (modal) {
-          // Show the modal using jQuery
-          $(modal).modal('show')
-        }
-    },
-    resetSearch(){
-      this.searchQuery = '';
-    },
-    reloadLeadList(){
-      this.showLeads = false;
-      setTimeout(() => {
-      this.showLeads = true;
-      }, 2000);
-    },
-    async getData() {
-      try {
-        const response = await axios.get(`/leadManagement`);
-        // Assigning values to variables
-        this.leads = response.data.leads;
-        this.owners = response.data.owners;
-        this.programs = response.data.programs;
-        this.customers = response.data.customers;
-        this.materialSpecialist = response.data.materialSpecialist;
-        this.capacitySpecialist = response.data.capacitySpecialist;
-        this.reloadLeadList();
-      } catch (error) {
-        console.error('Error fetching leads:', error);
-        console.log(error.response.status); // Log HTTP status from error object
-        console.log(error.response.data); // Log response data from error object
+    filteredUsers() {
+      const query = this.searchQuery.toLowerCase();
+      if (!query) {
+        return this.users;
       }
-    },
-    closeModal(modalId) {
-      const modal = document.getElementById(modalId);
-      if (modal) {
-      // Hide the modal using Bootstrap Modal API
-      $(modal).modal('hide');
-      }
-    },
-  },
-  watch: {
-
+      return this.users.filter(user => 
+        user.name.toLowerCase().includes(query)
+      );
+    }
   }
 };
 </script>
 
 <style scoped>
-  .mobile-app {
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    background-color: #f8f9fa;
-  }
+/* Background gradient for the entire page */
+.main-container {
+  min-height: 82vh;
+  background: linear-gradient(135deg, #8a0b0b, #031934);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
 
-  /* Top Banner Styling */
-  .top-banner {
-    background-color: #173052;
-    color: #ffffff;
-    padding: 15px;
-    text-align: center;
-  }
+/* Content wrapper with rounded corners and shadow */
+.content-wrapper {
+  max-width: 600px;
+  background: #fff; /* Add a background color for better readability */
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+}
 
-  .top-banner h1 {
-    margin: 0;
-    font-size: 20px;
-  }
+/* Header and date styling */
+h1 {
+  color: #333;
+  font-size: 2rem;
+}
 
-  /* Filter Section Styling */
-  .filter-section {
-    padding: 10px;
-    background-color: #e9ecef;
-  }
+p {
+  font-size: 1rem;
+  color: #6c757d;
+}
 
-  .icon-section {
-    display: flex;                  /* Use Flexbox for alignment */
-    justify-content: space-between; /* Equal space between buttons */
-    align-items: center;            /* Center the buttons vertically */
-    padding: 10px;                  /* Optional: add padding for aesthetics */
-  }
+/* Search bar customizations */
+.form-control {
+  border-radius: 8px;
+}
 
-  .filter-button {
-    background-color: #007bff;
-    color: #ffffff;     
-  }
+/* User list styling */
+.user-list {
+  max-height: 300px; /* Optional: Set a max height for scrollable list */
+  min-height: 300px; /* Optional: Set a max height for scrollable list */
+  overflow-y: auto; /* Scroll if content exceeds max height */
+}
 
-  .shortcut-button {
-    border: none;
-    padding: 8px 12px;
-    border-radius: 5px;
-    cursor: pointer;
-    flex: 1;                        /* Allow buttons to grow and fill space */
-    margin: 0 5px;                  /* Optional: small side margins for spacing */
-    text-align: center;    
-  }
+.user-item {
+  padding: 10px;
+  border-bottom: 1px solid #e0e0e0;
+}
 
-  .filter-button i {
-    font-size: 16px;
-  }
+.user-item:last-child {
+  border-bottom: none;
+}
 
-  .filters {
-    margin-top: 10px;
-  }
+/* Additional form styling */
+.form-check-input {
+  cursor: pointer;
+}
 
-  .form-select {
+.form-check-label {
+  font-weight: bold;
+}
+
+/* Green button styling */
+.button-container {
+  margin-top: 20px;
+}
+
+.btn-success {
+  background-color: #28a745;
+  border-color: #28a745;
+  color: #fff;
+}
+
+.btn-success:hover {
+  background-color: #218838;
+  border-color: #1e7e34;
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+  .content-wrapper {
     width: 100%;
-    margin-bottom: 10px;
-  }
-
-  /* Main Content Styling */
-  .content {
-    flex: 1;
-    overflow-y: auto;
     padding: 20px;
   }
-
-
-  /* Bottom Menu Styling */
-  .bottom-menu {
-    display: flex;
-    justify-content: space-around;
-    background-color: #ffffff;
-    border-top: 1px solid #ddd;
-    padding: 10px 0;
-    position: fixed;
-    width: 100%;
-    bottom: 0;
-    left: 0;
-    z-index: 1000; /* Ensure it stays on top of other elements */
-  }
-
-  .menu-item {
-    text-align: center;
-    flex: 1;
-  }
-
-  .menu-item i {
-    font-size: 24px;
-    color: #173052;
-  }
-
-  .menu-item span {
-    display: block;
-    font-size: 12px;
-    color: #6c757d;
-    margin-top: 5px;
-  }
-
-  .search-bar {
-    margin-bottom: 15px; /* Adds space between search bar and cards */
-    width: 100%;         /* Ensures it takes full width */
-  }
-
-  .search-input {
-    width: 100%;         /* Full width of parent element */
-    padding: 8px;        /* Adds padding for better user experience */
-    border: 1px solid #ccc; /* Adds border */
-    border-radius: 4px;  /* Rounded corners */
-    box-sizing: border-box; /* Include padding and border in element's total width */
-  }
-
-  .input-group-text {
-    padding: 10px;
-    border-radius: 0px;
-  }
-
+}
 </style>
