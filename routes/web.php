@@ -36,8 +36,8 @@ Route::delete('logout', [AuthenticatedSessionController::class, 'destroy'])
 
 // Dashboard
 
-Route::get('/', [DashboardController::class, 'index'])
-    ->name('dashboard')
+Route::get('/', [MeetingsCOntroller::class, 'index'])
+    ->name('meetings')
     ->middleware('auth');
 
 // Users
@@ -135,6 +135,18 @@ Route::get('meetings', [MeetingsController::class, 'index'])
     ->name('meetings')
     ->middleware('auth');
 
+Route::get('meetings/create', [MeetingsController::class, 'create'])
+    ->name('meetings.create')
+    ->middleware('auth');
+
+Route::post('meetings', [MeetingsController::class, 'store'])
+    ->name('meetings.store')
+    ->middleware('auth');
+
+Route::get('meetings/{meeting}/edit', [MeetingsController::class, 'edit'])
+    ->name('meetings.edit')
+    ->middleware('auth');
+
 // Reports
 
 Route::get('reports', [ReportsController::class, 'index'])
@@ -147,6 +159,6 @@ Route::get('/img/{path}', [ImagesController::class, 'show'])
     ->where('path', '.*')
     ->name('image');
 
-Route::get('attendance', [MembersController::class, 'attendance'])
+Route::get('attendance/{meeting}', [MeetingsController::class, 'attendance'])
     ->name('attendance')
     ->middleware('auth');

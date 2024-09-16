@@ -1,17 +1,21 @@
 <template>
-  <div class="d-flex align-items-center justify-content-center">
+<!--   <div class="d-flex align-items-center justify-content-center">
     <img 
       style="width: 100%;" 
       src="https://scontent.fmru7-1.fna.fbcdn.net/v/t39.30808-6/437554383_3666537220249864_2979846986410022832_n.jpg?stp=cp6_dst-jpg&_nc_cat=104&ccb=1-7&_nc_sid=2285d6&_nc_ohc=WKseyYvIwx0Q7kNvgFtn8BG&_nc_ht=scontent.fmru7-1.fna&_nc_gid=AA7hUAHinW1khhK5CNo_XxC&oh=00_AYCyzCf0EsjFMNl-ZcyCt3bCpkoj1pRNYAGOF4QkiYBvEw&oe=66DE2B21"
       alt="Background Image"
     />
-  </div>
-  
+  </div> -->
+
   <div class="main-container d-flex flex-column align-items-center justify-content-center">
-    <div class="content-wrapper text-center p-4">
+    <div class="bg-white rounded-md shadow overflow-hidden col-sm-12 w-full p-4">
+      <p class="text-muted mb-4">Title: <b>{{ meeting.title }}</b></p>
+      <p class="text-muted mb-4">Date: <b>{{ meeting.date }}</b></p>
+      <p class="text-muted mb-4">Office: <b>{{meeting.office}}</b></p>
+    </div>
+    <div class="content-wrapper text-center p-4 mt-10">
       <!-- Header -->
-      <p class="text-muted mb-4">Date: <b>{{ currentDate }}</b></p>
-      <p class="text-muted mb-4">Location: <b>Bureau Bonne Terre</b></p>
+    
 
       <template v-if="!addNew">
         <!-- Large Search Bar -->
@@ -31,6 +35,8 @@
               type="checkbox"
               :id="`user-${user.id}`"
               class="form-check-input me-2"
+              v-model="selectedMembers" 
+              @change="addMember(user)"
             />
             <label :for="`user-${user.id}`" class="form-check-label">
               {{ user.name }}
@@ -44,7 +50,6 @@
           <input type="text" v-model="form.locality" class="form-control form-control-lg mb-3" placeholder="Locality"/>
           <input type="text" v-model="form.phone" class="form-control form-control-lg mb-3" placeholder="Phone"/>
           <input type="text" v-model="form.constituency" class="form-control form-control-lg mb-3" placeholder="Constituency"/>
-          <button class="btn btn-success">Save</button>
       </template>
 
     </div>
@@ -52,7 +57,9 @@
     <!-- Green Button -->
     <div class="button-container mt-4">
       <button v-if="!addNew" class="btn btn-primary" @click="addNew = true">New Member</button>
-      <button v-if="addNew" class="btn btn-danger" @click="addNew = false">Cancel</button>
+      <button v-if="!addNew" class="btn btn-success ml-3" @click="addNew = true">End</button>
+      <button v-if="addNew" class="btn btn-success" @click="addNew = false">Save</button>
+      <button v-if="addNew" class="btn btn-danger ml-3" @click="addNew = false">Cancel</button>
     </div>
   </div>
 </template>
@@ -60,7 +67,8 @@
 <script>
 export default {
   props: {
-    users: {
+    meeting: Array,
+    members: {
       type: Array,
       default: () => []
     }
@@ -77,26 +85,37 @@ export default {
         locality: null,
         constituency: null,
       }),
+      selectedMembers: [], // Track selected members
     };
   },
   computed: {
     filteredUsers() {
       const query = this.searchQuery.toLowerCase();
       if (!query) {
-        return this.users;
+        return this.members;
       }
-      return this.users.filter(user => 
+      return this.members.filter(user => 
         user.name.toLowerCase().includes(query)
       );
     }
-  }
+  },
+  methods: {
+    addMember(user) {
+      // Log the checked member's name to the console
+      if (this.selectedMembers.includes(user.id)) {
+        console.log(`Checked member: ${user.name}`);
+      } else {
+        console.log(`Unchecked member: ${user.name}`);
+      }
+    },
+  },
 };
 </script>
 
 <style scoped>
 /* Background gradient for the entire page */
 .main-container {
-  min-height: 82vh;
+  min-height: 100vh;
   background: linear-gradient(135deg, #8a0b0b, #031934);
   padding: 20px;
   display: flex;
@@ -107,7 +126,7 @@ export default {
 
 /* Content wrapper with rounded corners and shadow */
 .content-wrapper {
-  max-width: 600px;
+  width: 100%;
   background: #fff; /* Add a background color for better readability */
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);

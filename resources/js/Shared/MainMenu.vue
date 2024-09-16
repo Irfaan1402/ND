@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="mb-4">
-      <Link class="d-flex align-items-center py-3 text-decoration-none" href="/">
+      <Link class="d-flex align-items-center py-3 text-decoration-none" href="/meetings">
         <i class="fa fa-home fa-lg me-2" :class="isUrl('') ? 'text-white' : 'text-secondary'"></i>
         <div :class="isUrl('') ? 'text-white' : 'text-secondary'">Meetings</div>
       </Link>

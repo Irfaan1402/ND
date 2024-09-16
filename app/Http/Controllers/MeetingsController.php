@@ -19,28 +19,29 @@ class MeetingsController extends Controller
 {
     public function index(): Response
     {
-        $members = Member::all();
+
         return Inertia::render('Meetings/Index', [
-            'filters' => Request::all('search', 'constituency'),
-            'members' => Auth::user()->office->members()->orderByName()
-                ->filter(Request::only('search', 'constituency'))
+            'filters' => Request::all('search', 'date', 'office_id'),
+            'offices' => Office::all(),
+            'meetings' => Auth::user()->office->meetings()->orderByDate()
+                ->filter(Request::only('search', 'date', 'office_id'))
                 ->paginate(10)
                 ->withQueryString()
-                ->through(fn ($member) => [
-                    'id' => $member->id,
-                    'name' => $member->name,
-                    'phone' => $member->phone,
-                    'locality' => $member->locality,
-                    'deleted_at' => $member->deleted_at,
-                    'email' => $member->email,
-                    'constituency' => $member->constituency,
+                ->through(fn ($meeting) => [
+                    'id' => $meeting->id,
+                    'title' => $meeting->title,
+                    'office_id' => $meeting->office_id,
+                    'office' => $meeting->office->name,
+                    'date' => $meeting->date,
+                    'topic' => $meeting->topic,
+                    'attachement' => $meeting->attachement_path,
                 ]),
         ]);
     }
 
     public function create(): Response
     {
-        return Inertia::render('Members/Create', [
+        return Inertia::render('Meetings/Create', [
             'offices' => Office::all(),
         ]);
     }
@@ -52,13 +53,11 @@ class MeetingsController extends Controller
     
         // Use Validator facade to validate the data
         $validator = Validator::make($data, [
-            'first_name' => ['required', 'max:50'],
-            'last_name' => ['required', 'max:50'],
+            'title' => ['required', 'max:50'],
+            'attachment_path' => ['nullable', 'max:50'],
             'office_id' => ['required', 'exists:offices,id'],
-            'email' => ['nullable', 'max:50', 'email'],
-            'phone' => ['nullable', 'max:50'],
-            'locality' => ['nullable', 'max:150'],
-            'constituency' => ['required', 'max:50'],
+            'topic' => ['nullable', 'max:50'],
+            'date' => ['nullable', 'max:50'],
         ]);
     
         // Check if validation fails
@@ -67,26 +66,36 @@ class MeetingsController extends Controller
         }
     
         // Create the member using validated data
-        Member::create($validator->validated());
+        Meeting::create($validator->validated());
     
         // Redirect with a success message
-        return Redirect::route('members')->with('success', 'Member created.');
+        return Redirect::route('meetings')->with('success', 'Meeting created.');
     }
 
-    public function edit(Member $member): Response
+    public function edit(Meeting $meeting): Response
     {
-        return Inertia::render('Members/Edit', [
-            'member' => [
-                'id' => $member->id,
-                'first_name' => $member->first_name,
-                'last_name' => $member->last_name,
-                'office_id' => $member->office_id,
-                'email' => $member->email,
-                'phone' => $member->phone,
-                'constituency' => $member->constituency,
-                'locality' => $member->locality,
+        $membersQuery = $meeting->members();
+         // Paginate the results
+        $members = $membersQuery->paginate(10)->withQueryString()->through(fn ($member) => [
+            'id' => $member->id,
+            'name' => $member->name,
+            'phone' => $member->phone,
+            'locality' => $member->locality,
+            'deleted_at' => $member->deleted_at,
+            'email' => $member->email,
+            'constituency' => $member->constituency,
+        ]);
+        return Inertia::render('Meetings/Edit', [
+            'meeting' => [
+                'id' => $meeting->id,
+                'title' => $meeting->title,
+                'date' => $meeting->date,
+                'office_id' => $meeting->office_id,
+                'topic' => $meeting->topic,
+                'attachment_path' => $meeting->attachment_path,
             ],
             'offices' => Office::all(),
+            'members' => $members,
         ]);
     }
 
@@ -121,10 +130,20 @@ class MeetingsController extends Controller
         return Redirect::back()->with('success', 'Contact restored.');
     }
 
-    public function attendance(): Response
+    public function attendance(Meeting $meeting): Response
     {
+        $meeting = [
+            'id' => $meeting->id,
+             'title' => $meeting->title,
+             'office_id' => $meeting->office_id,
+             'office' => $meeting->office->name,
+             'date' => $meeting->date,
+             'topic' => $meeting->topic,
+             'attachement' => $meeting->attachement_path,
+        ];
         return Inertia::render('Meetings/Welcome', [
-            'users' => User::orderByName()
+            'meeting' => $meeting,
+            'members' => Auth::user()->office->members()->orderByName()
             ->get()
             ->transform(fn ($user) => [
                 'id' => $user->id,

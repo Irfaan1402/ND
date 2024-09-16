@@ -37,4 +37,9 @@ class Member extends Model
         });
     }
 
+    public function meetings(): BelongsToMany
+    {
+        return $this->belongsToMany(Meeting::class, 'meeting_has_member', 'member_id', 'meeting_id');
+    }
+
 }

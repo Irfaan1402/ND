@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Meeting extends Model
 {
@@ -11,30 +12,37 @@ class Meeting extends Model
 
     protected $table = 'meetings';
 
-
-
-    public function getNameAttribute()
+    public function scopeOrderByDate($query)
     {
-        return $this->last_name.' '.$this->first_name;
+        $query->orderBy('date');
     }
 
-    public function scopeOrderByName($query)
+    public function office()
     {
-        $query->orderBy('last_name')->orderBy('first_name');
+        return $this->belongsTo(Office::class);
     }
 
     public function scopeFilter($query, array $filters)
     {
         $query->when($filters['search'] ?? null, function ($query, $search) {
             $query->where(function ($query) use ($search) {
-                $query->where('first_name', 'like', '%'.$search.'%')
-                    ->orWhere('last_name', 'like', '%'.$search.'%');
+                $query->where('title', 'like', '%'.$search.'%')
+                    ->orWhere('date', 'like', '%'.$search.'%');
             });
-        })->when($filters['constituency'] ?? null, function ($query, $constituency) {
-            $query->where(function ($query) use ($constituency) {
-                $query->where('constituency',$constituency);
+        })->when($filters['office_id'] ?? null, function ($query, $office) {
+            $query->where(function ($query) use ($office) {
+                $query->where('office_id',$office);
+            });
+        })->when($filters['date'] ?? null, function ($query, $date) {
+            $query->where(function ($query) use ($date) {
+                $query->where('date',$date);
             });
         });
+    }
+
+    public function members(): BelongsToMany
+    {
+        return $this->belongsToMany(Member::class, 'meeting_has_member', 'meeting_id', 'member_id');
     }
 
 }

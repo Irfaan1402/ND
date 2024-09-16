@@ -18,7 +18,7 @@ class MembersController extends Controller
 {
     public function index(): Response
     {
-        $members = Member::all();
+
         return Inertia::render('Members/Index', [
             'filters' => Request::all('search', 'constituency'),
             'members' => Auth::user()->office->members()->orderByName()
@@ -118,18 +118,5 @@ class MembersController extends Controller
         $contact->restore();
 
         return Redirect::back()->with('success', 'Contact restored.');
-    }
-
-    public function attendance(): Response
-    {
-        return Inertia::render('Meetings/Welcome', [
-            'users' => User::orderByName()
-            ->get()
-            ->transform(fn ($user) => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-            ]),
-        ]);
     }
 }

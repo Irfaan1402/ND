@@ -21,4 +21,9 @@ class Office extends Model
     {
         return $this->hasMany(Member::class);
     }
+
+    public function meetings(): HasMany
+    {
+        return $this->hasMany(Meeting::class);
+    }
 }
