@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Member;
+use App\Models\MeetingHasMember;
 use App\Models\Meeting;
 use App\Models\Office;
 use App\Models\User;
@@ -10,6 +11,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Request;
+use Illuminate\Http\Request as HttpRequest; // Alias the Request class for validation
 use Illuminate\Support\Facades\Validator; // Validator facade
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -132,6 +134,14 @@ class MeetingsController extends Controller
 
     public function attendance(Meeting $meeting): Response
     {
+        // Transform participants to get id, name, email, and locality
+        $participants = $meeting->members()->get()->transform(fn($participant) => [
+            'id' => $participant->id,
+            'name' => $participant->name,
+            'email' => $participant->email,
+            'locality' => $participant->locality,
+        ]);
+        
         $meeting = [
             'id' => $meeting->id,
              'title' => $meeting->title,
@@ -141,7 +151,9 @@ class MeetingsController extends Controller
              'topic' => $meeting->topic,
              'attachement' => $meeting->attachement_path,
         ];
-        return Inertia::render('Meetings/Welcome', [
+        // Transform participants to get id, name, email, and locality
+       
+        return Inertia::render('Meetings/Attendance', [
             'meeting' => $meeting,
             'members' => Auth::user()->office->members()->orderByName()
             ->get()
@@ -149,7 +161,62 @@ class MeetingsController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
+                'locality' => $user->locality,
             ]),
+            'participants' => $participants, // Include transformed participants
         ]);
     }
+
+    public function addToMeeting(HttpRequest $request) {
+        // Validate the incoming request data
+        $validatedData = $request->validate([
+            'memberId' => 'nullable|integer', // Allow memberId to be nullable
+            'memberFirstName' => 'nullable|string|max:255',
+            'memberLastName' => 'nullable|string|max:255',
+            'memberEmail' => 'nullable|email|max:255',
+            'memberPhone' => 'nullable|string|max:20',
+            'memberLocality' => 'nullable|string|max:255',
+            'memberConstituency' => 'nullable|string|max:255',
+            'meetingId' => 'nullable|integer',
+        ]);
+    
+        // Access the data
+        $memberId = $validatedData['memberId'];
+        $memberFirstName = $validatedData['memberFirstName'];
+        $memberLastName = $validatedData['memberLastName'];
+        $memberEmail = $validatedData['memberEmail'];
+        $memberPhone = $validatedData['memberPhone'];
+        $memberLocality = $validatedData['memberLocality'];
+        $memberConstituency = $validatedData['memberConstituency'];
+        $meetingId = $validatedData['meetingId'];
+    
+        // Create or find the member
+        if (is_null($memberId)) {
+            // Create new member
+            $member = new Member;
+            $member->first_name = $memberFirstName;
+            $member->last_name = $memberLastName;
+            $member->email = $memberEmail;
+            $member->phone = $memberPhone;
+            $member->locality = $memberLocality;
+            $member->constituency = $memberConstituency;
+            $member->office_id = 1;
+            $member->save();
+    
+            $memberId = $member->id; // Get the new member ID
+        } else {
+            // Find existing member
+            $member = Member::findOrFail($memberId); // Use findOrFail to handle not found
+        }
+    
+        // Link the member to the meeting
+        $meetingHasMember = new MeetingHasMember;
+        $meetingHasMember->meeting_id = $meetingId;
+        $meetingHasMember->member_id = $memberId;
+        $meetingHasMember->save();
+    
+        // Return a response
+        return response()->json(['message' => 'Registered to meeting successfully.']);
+    }
+    
 }

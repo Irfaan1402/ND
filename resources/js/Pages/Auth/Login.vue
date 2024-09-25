@@ -1,8 +1,7 @@
 <template>
   <Head title="Login" />
-  <div class="flex items-center justify-center p-6 min-h-screen bg-indigo-800">
+  <div class="flex items-center justify-center p-6 min-h-screen bg-rb">
     <div class="w-full max-w-md">
-      <logo class="block mx-auto w-full max-w-xs fill-white" height="50" />
       <form class="mt-8 bg-white rounded-lg shadow-xl overflow-hidden" @submit.prevent="login">
         <div class="px-10 py-12">
           <logo class="block mx-auto w-full max-w-xs fill-white" height="50" />
@@ -38,7 +37,7 @@ export default {
   data() {
     return {
       form: this.$inertia.form({
-        email: 'admin@rtknits.com',
+        email: 'admin@nd.com',
         password: 'secret123',
         remember: false,
       }),
@@ -51,3 +50,9 @@ export default {
   },
 }
 </script>
+<style>
+.bg-rb {
+    --tw-bg-opacity: 1;
+    background: linear-gradient(to right, #c40101, #1b319f);
+}
+</style>

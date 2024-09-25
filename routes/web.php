@@ -162,3 +162,7 @@ Route::get('/img/{path}', [ImagesController::class, 'show'])
 Route::get('attendance/{meeting}', [MeetingsController::class, 'attendance'])
     ->name('attendance')
     ->middleware('auth');
+
+Route::post('/addToMeeting', [MeetingsController::class, 'addToMeeting'])
+    ->name('addToMeeting')
+    ->middleware('auth');
