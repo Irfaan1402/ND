@@ -50,5 +50,7 @@ services:
       - "3306:3306"
     env_file:
       - .env
+    environment:
+      - MARIADB_ROOT_PASSWORD=${DB_PASSWORD}  # Add this line
 volumes:
   db_data: 
